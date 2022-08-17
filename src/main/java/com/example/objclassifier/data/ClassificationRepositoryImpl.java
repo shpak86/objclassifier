@@ -21,9 +21,15 @@ public class ClassificationRepositoryImpl implements ClassificationRepository {
     public void addImage(String name, Set<String> groups) {
         ClassifiedImage image = new ClassifiedImage(name);
         groups.forEach(groupName -> {
-            groupsRepository
-                    .findByName(groupName)
-                    .forEach(group -> image.getGroups().add(group));
+            var repoGroups = groupsRepository.findByName(groupName);
+            if (repoGroups.isEmpty()) {
+                ObjectsGroup objectsGroup = new ObjectsGroup(groupName);
+                groupsRepository.save(objectsGroup);
+                image.addGroup(objectsGroup);
+            } else {
+                repoGroups.forEach(group -> image.addGroup(group));
+            }
+
         });
         imagesRepository.save(image);
     }

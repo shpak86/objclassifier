@@ -15,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.objclassifier.domain.ObjectsClassificationUseCase;
-import com.example.objclassifier.domain.entities.Image;
 
 @Controller
 @RequestMapping(value = "/v1")
@@ -44,7 +43,7 @@ public class ImageProcessorController {
     public @ResponseBody ResponseEntity<String> process(@RequestParam("name") String name,
             @RequestParam("file") MultipartFile file) {
         try {
-            useCase.process(new Image(file.getBytes(), name));
+            useCase.classify(file.getBytes());
             return new ResponseEntity<String>("", HttpStatus.OK);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY);

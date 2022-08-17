@@ -2,11 +2,9 @@ package com.example.objclassifier.domain;
 
 import java.util.Set;
 
-import com.example.objclassifier.domain.entities.Image;
-
 public interface ObjectsClassificationUseCase {
 
-    boolean process(Image image);
+    boolean classify(byte[] image);
 
     Set<String> getGroups();
 
