@@ -1,69 +1,54 @@
 package com.example.objclassifier.presentation;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
-import com.example.objclassifier.data.ClassifiedImage;
-import com.example.objclassifier.data.ClassifiedImagesRepository;
-import com.example.objclassifier.data.ObjectsGroup;
-import com.example.objclassifier.data.ObjectsGroupsRepository;
+import com.example.objclassifier.domain.ObjectsClassificationUseCase;
+import com.example.objclassifier.domain.entities.Image;
 
 @Controller
-@RequestMapping(value = "/v1/classifier")
+@RequestMapping(value = "/v1")
 public class ImageProcessorController {
 
     @Autowired
-    ClassifiedImagesRepository imagesRepository;
+    @Qualifier("classificationInteractor")
+    ObjectsClassificationUseCase useCase;
 
-    @Autowired
-    ObjectsGroupsRepository groupsRepository;
+    @GetMapping("/groups")
+    public @ResponseBody Iterable<String> getGroups() {
+        return useCase.getGroups();
+    }
 
-    @GetMapping("/add")
-    @ResponseBody
-    public String add() {
+    @GetMapping("/groups/{name}")
+    public @ResponseBody Iterable<String> getGroup(@PathVariable("name") String name) {
+        return useCase.getGroupImages(name);
+    }
 
-        var objectsGroups = groupsRepository.findByName("group_1");
-        if (objectsGroups.isEmpty()) {
-            return "{status: 'error: group_1 not found'}";
-        } else {
-            String id = Long.valueOf(System.currentTimeMillis()).toString();
-            ClassifiedImage image = new ClassifiedImage("image_" + id);
-            ObjectsGroup group1 = objectsGroups.get(0);
-            ObjectsGroup group2 = new ObjectsGroup("group_" + id);
-            image.addGroup(group1);
-            image.addGroup(group2);
-            groupsRepository.save(group2);
-            imagesRepository.save(image);
+    @GetMapping(value = "/images/{name}")
+    public @ResponseBody ResponseEntity<Iterable<String>> getImageGroups(@PathVariable("name") String name) {
+        return new ResponseEntity<Iterable<String>>(useCase.getImageGroups(name), HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/images")
+    public @ResponseBody ResponseEntity<String> process(@RequestParam("name") String name,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            useCase.process(new Image(file.getBytes(), name));
+            return new ResponseEntity<String>("", HttpStatus.OK);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY);
         }
-
-        return "{status: 'ok'}";
     }
 
-    @GetMapping("/list")
-    @ResponseBody
-    public List<ClassifiedImage> process() {
-        var images = imagesRepository.findAll();
-        return StreamSupport.stream(images.spliterator(), false).collect(Collectors.toList());
-    }
-
-    @GetMapping("/group/{name}")
-    @ResponseBody
-    public Iterable<String> groups(@PathVariable("name") String name) {
-        List<ObjectsGroup> groups = groupsRepository.findByName(name);
-        Set<String> classifiedImages = new HashSet<>();
-        groups.stream().forEach(group -> {
-            classifiedImages.addAll(group.getImages().stream().map(it -> it.getName()).collect(Collectors.toList()));
-        });
-        return classifiedImages;
-    }
 }

@@ -2,17 +2,20 @@ package com.example.objclassifier.domain;
 
 import java.util.Set;
 
+import com.example.objclassifier.domain.entities.Image;
+
 public interface ObjectsClassificationUseCase {
-    void process(byte[] image);
 
-    Set<String> getClasses();
+    boolean process(Image image);
 
-    Set<String> getImages(String group);
+    Set<String> getGroups();
 
-    Set<String> getImages(Set<String> groups);
+    Set<String> getGroupImages(String name);
 
-    void removeClass(String group);
+    Set<String> getImageGroups(String name);
 
-    void removeImage(String image);
+    boolean removeGroup(String name);
+
+    boolean removeImage(String name);
 
 }
