@@ -40,8 +40,7 @@ public class ImageProcessorController {
     }
 
     @PostMapping(value = "/images")
-    public @ResponseBody ResponseEntity<String> process(@RequestParam("name") String name,
-            @RequestParam("file") MultipartFile file) {
+    public @ResponseBody ResponseEntity<String> process(@RequestParam("file") MultipartFile file) {
         try {
             useCase.classify(file.getBytes());
             return new ResponseEntity<String>("", HttpStatus.OK);
